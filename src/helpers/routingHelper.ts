@@ -1,14 +1,13 @@
-// @ts-ignore
-import {Navigate} from '@tanstack/react-router'
+import React from 'react'
+import { router } from '@/main'
 
-export const navigateToRoute = async (path: string, search?: Record<string, string>) => {
-    try {
-        Navigate({
-            to: path,
-            search,
-        })
-    } catch (error) {
-        console.error('Navigation failed:', error)
-        throw error
+export const navigateToRoute = (path: string) => {
+    return (event: React.MouseEvent) => {
+        event.preventDefault()
+        try {
+            router.navigate({ to: path })
+        } catch (error) {
+            console.error('Navigation failed:', error)
+        }
     }
 }

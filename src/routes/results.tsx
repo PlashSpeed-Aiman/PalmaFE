@@ -18,14 +18,14 @@ export const Route = createFileRoute('/results')({
 
 function ResultsPage() {
   const [selectedTabId, setSelectedTabId] = useState("map")
-  
+
   return (
     <div className="results-container">
       <div className="results-header">
         <H3>Palm Tree Analysis Results</H3>
         <p>View detailed analysis of your uploaded palm tree images</p>
       </div>
-      
+
       <Tabs 
         id="resultsTabs" 
         selectedTabId={selectedTabId} 
@@ -41,7 +41,7 @@ function ResultsPage() {
                 <Callout intent={Intent.PRIMARY} title="Map View">
                   <p>This interactive map shows the distribution of palm trees based on GPS coordinates extracted from your uploaded images.</p>
                 </Callout>
-                
+
                 <div className="map-placeholder" style={{ 
                   height: '400px', 
                   backgroundColor: '#e1e8ed', 
@@ -56,7 +56,7 @@ function ResultsPage() {
                     <p>Map integration will be displayed here</p>
                   </div>
                 </div>
-                
+
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                   <Button icon="filter" text="Filter Trees" />
                   <Button icon="zoom-in" text="Zoom In" />
@@ -66,7 +66,7 @@ function ResultsPage() {
             </div>
           } 
         />
-        
+
         <Tab 
           id="analysis" 
           title="Detailed Analysis" 
@@ -98,7 +98,7 @@ function ResultsPage() {
                     </tbody>
                   </HTMLTable>
                 </Card>
-                
+
                 <Card elevation={2} style={{ flex: '1', minWidth: '300px' }}>
                   <H4>Area Coverage</H4>
                   <HTMLTable striped style={{ width: '100%' }}>
@@ -125,7 +125,7 @@ function ResultsPage() {
                   </HTMLTable>
                 </Card>
               </div>
-              
+
               <Card elevation={2} style={{ marginTop: '20px' }}>
                 <H4>GPS Coordinates</H4>
                 <HTMLTable striped style={{ width: '100%' }}>
@@ -168,7 +168,7 @@ function ResultsPage() {
             </div>
           } 
         />
-        
+
         <Tab 
           id="download" 
           title="Download Report" 
@@ -177,14 +177,14 @@ function ResultsPage() {
               <Card elevation={2}>
                 <H4>Download Options</H4>
                 <p>Download your analysis results in various formats</p>
-                
+
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '20px' }}>
                   <Button icon="document" text="PDF Report" intent={Intent.PRIMARY} />
                   <Button icon="th" text="CSV Data" intent={Intent.SUCCESS} />
                   <Button icon="map" text="GeoJSON" intent={Intent.WARNING} />
-                  <Button icon="image" text="Map Image" intent={Intent.DANGER} />
+                  <Button icon="media" text="Map Image" intent={Intent.DANGER} />
                 </div>
-                
+
                 <Callout style={{ marginTop: '20px' }}>
                   <p>Reports include detailed analysis of tree counts, distribution, and health metrics.</p>
                 </Callout>
@@ -193,7 +193,7 @@ function ResultsPage() {
           } 
         />
       </Tabs>
-      
+
       <div className="action-buttons" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
         <Button icon="arrow-left" text="Back to Upload" />
         <Button icon="share" text="Share Results" intent={Intent.PRIMARY} />

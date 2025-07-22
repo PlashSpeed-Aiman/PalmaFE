@@ -1,0 +1,16 @@
+Functional Requirement:
+1.) User Registration: The system shall allow users to create a new account by providing
+their name, email and password.
+2.) Login: The system shall allow registered users to log in by entering their registered email
+and password.
+3.) Input Image: The system shall allow users to upload satellite imagery of palm oil trees for
+image processing.
+4.) View results: The system shall allow users to view results of processed palm oil tree
+images including total young trees and matured trees as well as the estimated area.
+5.) GPS & Geo-Tagging Support: Extract GPS coordinates for mapping tree distribution.
+Display results on an interactive map.
+6.) Download report: The system shall allow users to download a summary report of the
+processed results.
+7.) Image History: The system should allow logged users to view a history of their
+previously uploaded images.
+8.) Logout: The system shall allow registered users to log out securely.

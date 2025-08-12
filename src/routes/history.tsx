@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 import {
   Card,
   Button,
@@ -14,6 +14,7 @@ import {
   Tag,
 } from '@blueprintjs/core'
 import { Select, type ItemRendererProps} from '@blueprintjs/select'
+import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/history')({
   component: HistoryPage,
@@ -80,6 +81,15 @@ function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [dateFilter, setDateFilter] = useState('All Time')
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate({ to: '/' })
+    }
+  }, [isAuthenticated, navigate])
 
   // Filter images based on search query and filters
   const filteredImages = sampleImages.filter(img => {

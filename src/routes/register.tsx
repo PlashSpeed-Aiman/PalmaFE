@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   Checkbox,
   ProgressBar
 } from '@blueprintjs/core'
+import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
@@ -26,6 +27,8 @@ function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isRegistering, setIsRegistering] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const { register } = useAuth()
+  const navigate = useNavigate()
 
   // Calculate password strength whenever password changes
   useEffect(() => {
@@ -103,7 +106,7 @@ function RegisterPage() {
     return true
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) {
@@ -113,13 +116,24 @@ function RegisterPage() {
     setError(null)
     setIsRegistering(true)
 
-    // Simulate registration process
-    setTimeout(() => {
-      setIsRegistering(false)
-      // In a real app, you would handle registration here
-      // For demo purposes, we'll just show a success message
-      alert('Registration successful! Please check your email to verify your account.')
-    }, 1500)
+    try {
+      // Extract username from email (before the @ symbol)
+      const username = email.split('@')[0];
+      
+      const success = await register(username, email, password);
+      
+      if (success) {
+        // Redirect to login page after successful registration
+        navigate({ to: '/login' });
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } catch (err) {
+      setError('An error occurred during registration. Please try again.');
+      console.error('Registration error:', err);
+    } finally {
+      setIsRegistering(false);
+    }
   }
 
   const passwordToggleButton = (

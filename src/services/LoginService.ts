@@ -2,7 +2,7 @@
  * Service for handling user authentication and session management
  */
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
   rememberMe?: boolean;
 }
@@ -32,46 +32,112 @@ export class LoginService {
    * @param credentials The login credentials
    * @returns Promise resolving to the login result
    */
-  login(credentials: LoginCredentials): Promise<LoginResult> {
-    // Empty implementation
-    return Promise.resolve({
-      success: true,
-      message: 'Login successful',
-      token: 'dummy-token',
-      user: {
-        id: '1',
-        username: credentials.username,
-        email: `${credentials.username}@example.com`,
-        role: 'user'
+  async login(credentials: LoginCredentials): Promise<LoginResult> {
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.message || 'Login failed',
+        };
       }
-    });
+      
+      return {
+        success: true,
+        message: 'Login successful',
+        token: data.token,
+        user: data.user,
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        success: false,
+        message: 'An error occurred during login',
+      };
+    }
   }
 
   /**
    * Logs out the current user
    * @returns Promise resolving when logout is complete
    */
-  logout(): Promise<void> {
-    // Empty implementation
-    return Promise.resolve();
+  async logout(): Promise<void> {
+    try {
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      
+      if (token) {
+        await fetch('/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+      }
+      
+      // Clear stored tokens regardless of API response
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear tokens on error
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+    }
   }
 
   /**
    * Checks if a user is currently authenticated
    * @returns Promise resolving to a boolean indicating if the user is authenticated
    */
-  isAuthenticated(): Promise<boolean> {
-    // Empty implementation
-    return Promise.resolve(false);
+  async isAuthenticated(): Promise<boolean> {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    return !!token; // Return true if token exists
   }
 
   /**
    * Gets information about the currently logged in user
    * @returns Promise resolving to user information or null if not logged in
    */
-  getCurrentUser(): Promise<UserInfo | null> {
-    // Empty implementation
-    return Promise.resolve(null);
+  async getCurrentUser(): Promise<UserInfo | null> {
+    try {
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      
+      if (!token) {
+        return null;
+      }
+      
+      // For now, we'll decode the JWT token to get user info
+      // In a real app, you might want to make an API call to get fresh user data
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      console.log('JWT payload:', payload);
+      
+      // Check for the specific claim format
+      const claimName = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+      if (claimName) {
+        console.log('Found username in claim format:', claimName);
+      }
+      
+      return {
+        id: payload.sub || payload.id,
+        username: payload.username || payload.preferred_username || payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
+        email: payload.email,
+        role: payload.role || 'user'
+      };
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
   }
 
   /**

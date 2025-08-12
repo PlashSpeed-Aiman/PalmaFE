@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import {
   Card,
@@ -10,24 +10,27 @@ import {
   H3,
   Intent
 } from '@blueprintjs/core'
+import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
 })
 
 function LoginPage() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Basic validation
-    if (!username.trim()) {
+    if (!email.trim()) {
       setError('Username is required')
       return
     }
@@ -40,13 +43,25 @@ function LoginPage() {
     setError(null)
     setIsLoggingIn(true)
     
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const success = await login({
+        email,
+        password,
+        rememberMe
+      })
+      
+      if (success) {
+        // Redirect to upload page after successful login
+        navigate({ to: '/upload' })
+      } else {
+        setError('Invalid username or password')
+      }
+    } catch (err) {
+      setError('An error occurred during login. Please try again.')
+      console.error('Login error:', err)
+    } finally {
       setIsLoggingIn(false)
-      // In a real app, you would handle authentication here
-      // For demo purposes, we'll just show a success message
-      alert('Login successful!')
-    }, 1500)
+    }
   }
 
   const lockButton = (
@@ -80,8 +95,8 @@ function LoginPage() {
             <InputGroup
               id="username-input"
               placeholder="Enter your username or email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               large
               fill
             />

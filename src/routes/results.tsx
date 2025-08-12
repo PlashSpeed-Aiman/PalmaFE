@@ -11,6 +11,7 @@ import {
   Tab,
   Tabs
 } from '@blueprintjs/core'
+import Map from '../components/Map'
 
 export const Route = createFileRoute('/results')({
   component: ResultsPage,
@@ -18,6 +19,19 @@ export const Route = createFileRoute('/results')({
 
 function ResultsPage() {
   const [selectedTabId, setSelectedTabId] = useState("map")
+  const [mapZoom, setMapZoom] = useState(14)
+  
+  // Sample tree data - in a real app, this would come from an API
+  const treeData = [
+    { id: 'T001', latitude: 3.1390, longitude: 101.6869, type: 'Mature' },
+    { id: 'T002', latitude: 3.1392, longitude: 101.6872, type: 'Young' },
+    { id: 'T003', latitude: 3.1395, longitude: 101.6875, type: 'Mature' },
+    { id: 'T004', latitude: 3.1398, longitude: 101.6878, type: 'Mature' }
+  ]
+  
+  // Map zoom handlers
+  const handleZoomIn = () => setMapZoom(prev => Math.min(prev + 1, 20))
+  const handleZoomOut = () => setMapZoom(prev => Math.max(prev - 1, 1))
 
   return (
     <div className="results-container">
@@ -42,25 +56,14 @@ function ResultsPage() {
                   <p>This interactive map shows the distribution of palm trees based on GPS coordinates extracted from your uploaded images.</p>
                 </Callout>
 
-                <div className="map-placeholder" style={{ 
-                  height: '400px', 
-                  backgroundColor: '#e1e8ed', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  borderRadius: '3px',
-                  marginTop: '20px'
-                }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <H4>Interactive Map</H4>
-                    <p>Map integration will be displayed here</p>
-                  </div>
+                <div style={{ marginTop: '20px' }}>
+                  <Map trees={treeData} zoom={mapZoom} />
                 </div>
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                   <Button icon="filter" text="Filter Trees" />
-                  <Button icon="zoom-in" text="Zoom In" />
-                  <Button icon="zoom-out" text="Zoom Out" />
+                  <Button icon="zoom-in" text="Zoom In" onClick={handleZoomIn} />
+                  <Button icon="zoom-out" text="Zoom Out" onClick={handleZoomOut} />
                 </div>
               </Card>
             </div>

@@ -1,0 +1,42 @@
+.mapboxgl-map {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tree-marker {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.tree-marker:hover {
+  transform: scale(1.2);
+}
+
+.mapboxgl-popup {
+  max-width: 200px;
+}
+
+.mapboxgl-popup-content {
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+.mapboxgl-ctrl-group {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom styles for different tree types */
+.tree-marker.mature {
+  background-color: #2ECC71;
+}
+
+.tree-marker.young {
+  background-color: #F39C12;
+}

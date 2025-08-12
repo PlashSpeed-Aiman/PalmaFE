@@ -44,7 +44,17 @@ export const Route = createRootRoute({
                 <span style={{ color: 'black', marginRight: '1rem' }}>
                   Welcome, {user?.username || 'User'}
                 </span>
-                <Button icon="log-out" onClick={handleLogout} text="Logout" style={{ marginRight: '0.25rem' }} />
+                <Popover
+                  content={
+                    <Menu>
+                      <MenuItem icon="user" text="Profile" onClick={navigateToRoute("/profile")} />
+                      <MenuItem icon="log-out" text="Logout" onClick={handleLogout} />
+                    </Menu>
+                  }
+                  position={Position.BOTTOM}
+                >
+                  <Button icon="user" rightIcon="caret-down" style={{ marginRight: '0.25rem' }} />
+                </Popover>
               </>
             ) : (
               <>

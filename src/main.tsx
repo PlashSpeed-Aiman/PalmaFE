@@ -8,6 +8,7 @@ import { routeTree } from './routeTree.gen'
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 import { AuthProvider } from './contexts/AuthContext'
+import {OverlayToaster, type Toaster} from "@blueprintjs/core";
 
 // Create a new router instance
 export const router = createRouter({
@@ -18,6 +19,7 @@ export const router = createRouter({
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 })
+export const myToaster: Toaster = await OverlayToaster.create({ position: "bottom-right" });
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {

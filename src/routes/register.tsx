@@ -11,6 +11,7 @@ import {
   Checkbox,
   ProgressBar
 } from '@blueprintjs/core'
+import {myToaster} from "@/main.tsx";
 import { useAuth } from '../contexts/AuthContext'
 
 export const Route = createFileRoute('/register')({
@@ -68,10 +69,10 @@ function RegisterPage() {
 
   const validateForm = () => {
     // Name validation
-    if (!fullName.trim()) {
-      setError('Full name is required')
-      return false
-    }
+    // if (!fullName.trim()) {
+    //   setError('Full name is required')
+    //   return false
+    // }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -123,8 +124,16 @@ function RegisterPage() {
       const success = await register(username, email, password);
       
       if (success) {
-        // Redirect to login page after successful registration
-        navigate({ to: '/login' });
+          // Show success toast and redirect to login page after successful registration
+          myToaster.show({
+              message: "Registration successful! Redirecting to login...",
+              intent: "success",
+              icon: "tick-circle"
+          });
+
+          setTimeout(() => {
+              navigate({to: '/login'});
+          }, 1000);
       } else {
         setError('Registration failed. Please try again.');
       }
@@ -160,20 +169,20 @@ function RegisterPage() {
         )}
 
         <form onSubmit={handleRegister}>
-          <FormGroup
-            label="Full Name"
-            labelFor="fullname-input"
-            labelInfo="(required)"
-          >
-            <InputGroup
-              id="fullname-input"
-              placeholder="Enter your full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              large
-              fill
-            />
-          </FormGroup>
+          {/*<FormGroup*/}
+          {/*  label="Full Name"*/}
+          {/*  labelFor="fullname-input"*/}
+          {/*  labelInfo="(required)"*/}
+          {/*>*/}
+          {/*  <InputGroup*/}
+          {/*    id="fullname-input"*/}
+          {/*    placeholder="Enter your full name"*/}
+          {/*    value={fullName}*/}
+          {/*    onChange={(e) => setFullName(e.target.value)}*/}
+          {/*    large*/}
+          {/*    fill*/}
+          {/*  />*/}
+          {/*</FormGroup>*/}
 
           <FormGroup
             label="Email Address"

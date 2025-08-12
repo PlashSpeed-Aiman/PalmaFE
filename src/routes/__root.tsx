@@ -21,7 +21,7 @@ export const Route = createRootRoute({
       <div className="app-container">
         <Navbar className="bp4-dark">
           <Navbar.Group align={Alignment.START}>
-            <Navbar.Heading>Palm Tree Analyzer</Navbar.Heading>
+            <Navbar.Heading>PalmaCount</Navbar.Heading>
             <Navbar.Divider />
             <Link to="/" className="bp4-button bp4-minimal" style={{marginRight: '0.5rem'}}>
               Home

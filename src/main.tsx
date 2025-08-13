@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
+import {RouterProvider, createRouter, createHashHistory} from '@tanstack/react-router'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -10,11 +10,13 @@ import reportWebVitals from './reportWebVitals.ts'
 import { AuthProvider } from './contexts/AuthContext'
 import {OverlayToaster, type Toaster} from "@blueprintjs/core";
 
+const hashHistory = createHashHistory()
 // Create a new router instance
 export const router = createRouter({
   routeTree,
   context: {},
   defaultPreload: 'intent',
+  history: hashHistory, // Use hash routing instead of browser history API
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,

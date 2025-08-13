@@ -21,7 +21,7 @@ export const router = createRouter({
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 })
-export const myToaster: Toaster = await OverlayToaster.create({ position: "bottom-right" });
+export const myToaster: Promise<Toaster> = OverlayToaster.create({ position: "bottom-right" });
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {

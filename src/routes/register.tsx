@@ -125,7 +125,7 @@ function RegisterPage() {
       
       if (success) {
           // Show success toast and redirect to login page after successful registration
-          myToaster.show({
+          (await myToaster).show({
               message: "Registration successful! Redirecting to login...",
               intent: "success",
               icon: "tick-circle"

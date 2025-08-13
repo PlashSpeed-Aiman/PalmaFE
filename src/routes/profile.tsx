@@ -103,9 +103,9 @@ function ProfilePage() {
         setError(data.message || 'Failed to update profile')
       }
     } catch (err) {
-      console.error('Profile update error:', err)
-      setError('An error occurred while updating your profile')
-      myToaster.show({
+      console.error('Profile update error:', err);
+      setError('An error occurred while updating your profile');
+      (await myToaster).show({
         message: 'An error occurred while updating your profile',
         intent: Intent.DANGER
       })

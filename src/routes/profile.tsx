@@ -165,7 +165,7 @@ function ProfilePage() {
               placeholder="Email"
               value={email}
               disabled={true}  // Email cannot be changed
-              helperText="Email cannot be changed"
+              // helperText="Email cannot be changed"
             />
           </FormGroup>
           
@@ -191,7 +191,7 @@ function ProfilePage() {
               placeholder="Role"
               value={user?.role || 'User'}
               disabled={true}  // Role cannot be changed by user
-              helperText="Role cannot be changed by user"
+              // helperText="Role cannot be changed by user"
             />
           </FormGroup>
         </div>

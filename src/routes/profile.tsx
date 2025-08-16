@@ -80,7 +80,7 @@ function ProfilePage() {
       const API_URL = import.meta.env.VITE_API_URL || '';
       const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
       
-      const response = await fetch(`${API_URL}/users/update`, {
+      const response = await fetch(`${API_URL}/UserManagement/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

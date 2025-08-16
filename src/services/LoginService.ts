@@ -116,24 +116,37 @@ export class LoginService {
         return null;
       }
       
-      // For now, we'll decode the JWT token to get user info
-      // In a real app, you might want to make an API call to get fresh user data
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Always fetch fresh user data from the API to reflect latest profile changes
+      const API_URL = (import.meta as any).env?.VITE_API_URL || '';
+      const response = await fetch(`${API_URL}/UserManagement/details`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          // Ensure we bypass any caches
+          'Cache-Control': 'no-cache'
+        }
+      });
       
-      console.log('JWT payload:', payload);
-      
-      // Check for the specific claim format
-      const claimName = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
-      if (claimName) {
-        console.log('Found username in claim format:', claimName);
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          return null;
+        }
+        console.error('Failed to fetch current user. Status:', response.status);
+        return null;
       }
       
-      return {
-        id: payload.sub || payload.id,
-        username: payload.username || payload.preferred_username || payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
-        email: payload.email,
-        role: payload.role || 'user'
+      const data = await response.json();
+      
+      const userInfo: UserInfo = {
+        id: data.id || data.userId || data.sub || '',
+        username: data.username || data.preferred_username || data.name || data.fullName || '',
+        email: data.email || '',
+        fullName: data.fullName || data.name,
+        role: data.role || 'user'
       };
+      
+      return userInfo;
     } catch (error) {
       console.error('Error getting current user:', error);
       return null;

@@ -34,7 +34,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           if (isAuth) {
             const currentUser = await loginService.getCurrentUser();
-            console.log('Current user from token:', currentUser);
             setUser(currentUser);
           }
         }

@@ -41,7 +41,7 @@ export const Route = createRootRoute({
           <Navbar.Group align={Alignment.END}>
             {isAuthenticated ? (
               <>
-                <span style={{ color: 'black', marginRight: '1rem' }}>
+                <span style={{ color: 'black', marginRight: '1rem', fontWeight: "bold" }}>
                   Welcome, {user?.username || 'User'}
                 </span>
                 <Popover

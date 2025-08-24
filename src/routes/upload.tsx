@@ -382,7 +382,6 @@ function UploadPage() {
                 alt="Annotated Result"
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '500px',
                   border: '1px solid #d8e1e8',
                   borderRadius: '3px',
                 }}

@@ -349,7 +349,6 @@ function UploadPage() {
                 alt="Preview" 
                 style={{ 
                   maxWidth: '100%', 
-                  maxHeight: '300px', 
                   border: '1px solid #d8e1e8',
                   borderRadius: '3px'
                 }} 

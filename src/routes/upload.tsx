@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
   Card,
@@ -30,6 +30,8 @@ interface GpsCoordinates {
 }
 
 function UploadPage() {
+  const API_BASE = import.meta.env.VITE_API_URL || "https://localhost:7024"
+
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -37,6 +39,12 @@ function UploadPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [gpsData, setGpsData] = useState<GpsCoordinates | null>(null)
   const [uploadComplete, setUploadComplete] = useState(false)
+
+  // New state for processing/results
+  const [processing, setProcessing] = useState(false)
+  const [uploadedId, setUploadedId] = useState<string | null>(null)
+  const [resultImageSrc, setResultImageSrc] = useState<string | null>(null)
+  const [resultData, setResultData] = useState<any | null>(null)
 
   // Extract GPS data from image if available
   // @ts-ignore
@@ -64,6 +72,10 @@ function UploadPage() {
       setPreviewUrl(null)
       setGpsData(null)
       setUploadComplete(false)
+      setProcessing(false)
+      setUploadedId(null)
+      setResultImageSrc(null)
+      setResultData(null)
       return
     }
 
@@ -82,129 +94,192 @@ function UploadPage() {
     setUploadError(null)
     setFile(selectedFile)
     setUploadComplete(false)
+    // Reset previous results state when picking a new file
+    setProcessing(false)
+    setUploadedId(null)
+    setResultImageSrc(null)
+    setResultData(null)
 
     // Create preview URL
     const reader = new FileReader()
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string)
       // Try to extract GPS metadata
-      extractImageMetadata(selectedFile)
+      // extractImageMetadata(selectedFile)
     }
     reader.readAsDataURL(selectedFile)
   }
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) return
-
+    setUploadError(null)
     setUploading(true)
     setUploadProgress(0)
     setUploadComplete(false)
+    setProcessing(false)
+    setResultImageSrc(null)
+    setResultData(null)
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        const newProgress = prev + 10
-        if (newProgress >= 100) {
-          clearInterval(interval)
-          setUploading(false)
-          setUploadComplete(true)
-          return 100
-        }
-        return newProgress
+    try {
+      const formData = new FormData()
+      // Assuming backend expects key name "file"
+      formData.append("file", file, file.name)
+
+      // Simulate progress up to 90% while uploading
+      const progressTimer = setInterval(() => {
+        setUploadProgress((prev) => (prev >= 90 ? prev : Math.min(90, prev + 5)))
+      }, 200)
+
+      const uploadRes = await fetch(`${API_BASE}/Images/upload`, {
+        method: 'POST',
+        body: formData,
       })
-    }, 500)
+
+      clearInterval(progressTimer)
+
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text().catch(() => '')
+        throw new Error(`Upload failed (${uploadRes.status}): ${text || uploadRes.statusText}`)
+      }
+
+      const uploadJson = await uploadRes.json()
+      setUploadedId(uploadJson.id)
+
+      setUploading(false)
+      setUploadProgress(100)
+      setUploadComplete(true)
+
+      // Start polling for results
+      setProcessing(true)
+
+      const maxAttempts = 20 // ~40s total if interval=2000ms
+      const intervalMs = 2000
+
+      let attempt = 0
+      let lastError: unknown = null
+
+      while (attempt < maxAttempts) {
+        attempt += 1
+        try {
+          const res = await fetch(`${API_BASE}/Images/${uploadJson.id}/results`, {
+            method: 'GET',
+          })
+          if (!res.ok) {
+            lastError = new Error(`Results fetch failed (${res.status})`)
+          } else {
+            const json = await res.json()
+            if (json && json.success && json.annotated_image?.data) {
+              setResultData(json)
+              const dataUrl = `data:image/jpeg;base64,${json.annotated_image.data}`
+              setResultImageSrc(dataUrl)
+              setProcessing(false)
+              return
+            }
+            lastError = new Error('Results not ready yet')
+          }
+        } catch (err) {
+          lastError = err
+        }
+
+        await new Promise((r) => setTimeout(r, intervalMs))
+      }
+
+      setProcessing(false)
+      throw lastError || new Error('Timed out waiting for results')
+    } catch (err: any) {
+      console.error(err)
+      setUploading(false)
+      setProcessing(false)
+      setUploadError(err?.message || 'An error occurred during upload or processing.')
+    }
   }
 
   return (
     <div className="grid-container">
-      <div className="left-panel">
-        <Card>
-          <H3>Analytics</H3>
-          <Callout title="Palm Tree Analysis" intent="primary">
-            View analytics on your annotated palm tree data
-          </Callout>
+      {/*<div className="left-panel">*/}
+      {/*  <Card>*/}
+      {/*    <H3>Analytics</H3>*/}
+      {/*    <Callout title="Palm Tree Analysis" intent="primary">*/}
+      {/*      View analytics on your annotated palm tree data*/}
+      {/*    </Callout>*/}
 
-          <H4 style={{ marginTop: '20px' }}>Tree Statistics</H4>
-          <HTMLTable striped style={{ width: '100%' }}>
-            <thead>
-              <tr>
-                <th>Tree Type</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Young Trees</td>
-                <td>143</td>
-              </tr>
-              <tr>
-                <td>Mature Trees</td>
-                <td>287</td>
-              </tr>
-              <tr>
-                <td>Total Trees</td>
-                <td>430</td>
-              </tr>
-              <tr>
-                <td>Estimated Area</td>
-                <td>12.5 hectares</td>
-              </tr>
-            </tbody>
-          </HTMLTable>
+      {/*    <H4 style={{ marginTop: '20px' }}>Tree Statistics</H4>*/}
+      {/*    <HTMLTable striped style={{ width: '100%' }}>*/}
+      {/*      <thead>*/}
+      {/*        <tr>*/}
+      {/*          <th>Tree Type</th>*/}
+      {/*          <th>Count</th>*/}
+      {/*        </tr>*/}
+      {/*      </thead>*/}
+      {/*      <tbody>*/}
+      {/*        <tr>*/}
+      {/*          <td>Young Trees</td>*/}
+      {/*          <td>143</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>Mature Trees</td>*/}
+      {/*          <td>287</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>Total Trees</td>*/}
+      {/*          <td>430</td>*/}
+      {/*        </tr>*/}
+      {/*      </tbody>*/}
+      {/*    </HTMLTable>*/}
 
-          <H4 style={{ marginTop: '20px' }}>Upload Statistics</H4>
-          <HTMLTable striped style={{ width: '100%' }}>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Total Images</td>
-                <td>24</td>
-              </tr>
-              <tr>
-                <td>Processed</td>
-                <td>18</td>
-              </tr>
-              <tr>
-                <td>Pending</td>
-                <td>6</td>
-              </tr>
-              <tr>
-                <td>Success Rate</td>
-                <td>92%</td>
-              </tr>
-            </tbody>
-          </HTMLTable>
+      {/*    <H4 style={{ marginTop: '20px' }}>Upload Statistics</H4>*/}
+      {/*    <HTMLTable striped style={{ width: '100%' }}>*/}
+      {/*      <thead>*/}
+      {/*        <tr>*/}
+      {/*          <th>Metric</th>*/}
+      {/*          <th>Value</th>*/}
+      {/*        </tr>*/}
+      {/*      </thead>*/}
+      {/*      <tbody>*/}
+      {/*        <tr>*/}
+      {/*          <td>Total Images</td>*/}
+      {/*          <td>24</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>Processed</td>*/}
+      {/*          <td>18</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>Pending</td>*/}
+      {/*          <td>6</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>Success Rate</td>*/}
+      {/*          <td>92%</td>*/}
+      {/*        </tr>*/}
+      {/*      </tbody>*/}
+      {/*    </HTMLTable>*/}
 
-          <H4 style={{ marginTop: '20px' }}>Recent Activity</H4>
-          <HTMLTable striped style={{ width: '100%' }}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2025-07-18</td>
-                <td>3 images uploaded</td>
-              </tr>
-              <tr>
-                <td>2025-07-17</td>
-                <td>5 images processed</td>
-              </tr>
-              <tr>
-                <td>2025-07-16</td>
-                <td>Analysis completed</td>
-              </tr>
-            </tbody>
-          </HTMLTable>
-        </Card>
-      </div>
+      {/*    <H4 style={{ marginTop: '20px' }}>Recent Activity</H4>*/}
+      {/*    <HTMLTable striped style={{ width: '100%' }}>*/}
+      {/*      <thead>*/}
+      {/*        <tr>*/}
+      {/*          <th>Date</th>*/}
+      {/*          <th>Action</th>*/}
+      {/*        </tr>*/}
+      {/*      </thead>*/}
+      {/*      <tbody>*/}
+      {/*        <tr>*/}
+      {/*          <td>2025-07-18</td>*/}
+      {/*          <td>3 images uploaded</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>2025-07-17</td>*/}
+      {/*          <td>5 images processed</td>*/}
+      {/*        </tr>*/}
+      {/*        <tr>*/}
+      {/*          <td>2025-07-16</td>*/}
+      {/*          <td>Analysis completed</td>*/}
+      {/*        </tr>*/}
+      {/*      </tbody>*/}
+      {/*    </HTMLTable>*/}
+      {/*  </Card>*/}
+      {/*</div>*/}
 
       <div className="center-panel">
         <Card>
@@ -293,20 +368,67 @@ function UploadPage() {
             />
           </div>
 
-          {uploadComplete && (
+
+          {processing && (
+            <Callout intent={Intent.PRIMARY} title="Processing..." style={{ marginTop: '20px' }}>
+              We are analyzing your image. This may take a little while.
+            </Callout>
+          )}
+
+          {resultImageSrc && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <H4>Annotated Result</H4>
+              <img
+                src={resultImageSrc}
+                alt="Annotated Result"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '500px',
+                  border: '1px solid #d8e1e8',
+                  borderRadius: '3px',
+                }}
+              />
+            </div>
+          )}
+
+          {resultData?.results?.counts && (
+            <Card style={{ marginTop: '20px', backgroundColor: '#f5f8fa' }}>
+              <H4>Detection Summary</H4>
+              <HTMLTable condensed style={{ width: '100%' }}>
+                <tbody>
+                  <tr>
+                    <td><strong>Mature (Healthy)</strong></td>
+                    <td>{resultData.results.counts["Mature(Healthy)"] ?? 0}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Mature (Yellow)</strong></td>
+                    <td>{resultData.results.counts["Mature(Yellow)"] ?? 0}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Mature (Dead)</strong></td>
+                    <td>{resultData.results.counts["Mature(Dead)"] ?? 0}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Young</strong></td>
+                    <td>{resultData.results.counts.Young ?? 0}</td>
+                  </tr>
+                </tbody>
+              </HTMLTable>
+              {resultData.results.summary && (
+                <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#5c7080' }}>
+                  Total palms: {resultData.results.summary.total_palms} | Total mature: {resultData.results.summary.total_mature} | Total young: {resultData.results.summary.total_young}
+                </p>
+              )}
+            </Card>
+          )}
+
+          {uploadComplete && !processing && !resultImageSrc && (
             <Callout 
               intent={Intent.SUCCESS} 
               title="Upload Complete" 
               style={{ marginTop: '20px' }}
             >
               <p>Your image has been successfully uploaded and is being processed.</p>
-              <div style={{ marginTop: '10px' }}>
-                <Link to="/results">
-                  <Button intent={Intent.SUCCESS} icon="document-open">
-                    View Results
-                  </Button>
-                </Link>
-              </div>
             </Callout>
           )}
         </Card>

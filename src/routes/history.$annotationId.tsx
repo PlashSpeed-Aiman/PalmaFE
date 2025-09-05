@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
   Card,
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/history/$annotationId')({
 })
 
 function AnnotationPage() {
-  const { annotationId } = useParams()
+  const { annotationId } = Route.useParams()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [annotation, setAnnotation] = useState<Annotation | null>(null)
@@ -164,7 +164,7 @@ function AnnotationPage() {
         {annotation.results?.counts && (
           <Card style={{ marginTop: '20px', backgroundColor: '#f5f8fa' }}>
             <H4>Detection Summary</H4>
-            <HTMLTable condensed style={{ width: '100%' }}>
+            <HTMLTable style={{ width: '100%' }}>
               <tbody>
                 <tr>
                   <td><strong>Mature (Healthy)</strong></td>

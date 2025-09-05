@@ -360,7 +360,7 @@ function UploadPage() {
                 <Icon icon="geolocation" style={{ marginRight: '8px' }} /> GPS Data Detected
               </H4>
               <p>The following location data was extracted from your image:</p>
-              <HTMLTable condensed style={{ width: '100%' }}>
+              <HTMLTable style={{ width: '100%' }}>
                 <tbody>
                   <tr>
                     <td><strong>Latitude:</strong></td>
@@ -435,7 +435,7 @@ function UploadPage() {
           {resultData?.results?.counts && (
             <Card style={{ marginTop: '20px', backgroundColor: '#f5f8fa' }}>
               <H4>Detection Summary</H4>
-              <HTMLTable condensed style={{ width: '100%' }}>
+              <HTMLTable style={{ width: '100%' }}>
                 <tbody>
                   <tr>
                     <td><strong>Mature (Healthy)</strong></td>
@@ -451,13 +451,13 @@ function UploadPage() {
                   </tr>
                   <tr>
                     <td><strong>Young</strong></td>
-                    <td>{resultData.results.counts.Young ?? 0}</td>
+                    <td>{resultData.results.counts.young ?? 0}</td>
                   </tr>
                 </tbody>
               </HTMLTable>
               {resultData.results.summary && (
                 <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#5c7080' }}>
-                  Total palms: {resultData.results.summary.total_palms} | Total mature: {resultData.results.summary.total_mature} | Total young: {resultData.results.summary.total_young}
+                  Total palms: {resultData.results.summary.totalPalms} | Total mature: {resultData.results.summary.totalMature} | Total young: {resultData.results.summary.totalYoung}
                 </p>
               )}
             </Card>

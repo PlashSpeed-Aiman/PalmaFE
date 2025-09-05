@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
@@ -12,103 +11,80 @@ import {
   InputGroup,
   ButtonGroup,
   Tag,
+  Spinner,
 } from '@blueprintjs/core'
-import { Select, type ItemRendererProps} from '@blueprintjs/select'
 import { useAuth } from '../contexts/AuthContext'
+import { AnnotationService, type Annotation } from '../services/AnnotationService'
 
 export const Route = createFileRoute('/history')({
   component: HistoryPage,
 })
 
-// Sample data for demonstration
-const sampleImages = [
-  {
-    id: 'img001',
-    name: 'Palm Plantation East',
-    uploadDate: '2025-07-20',
-    status: 'Processed',
-    treeCount: 430,
-    thumbnail: 'https://via.placeholder.com/150?text=Palm+Trees'
-  },
-  {
-    id: 'img002',
-    name: 'North Field Survey',
-    uploadDate: '2025-07-18',
-    status: 'Processed',
-    treeCount: 215,
-    thumbnail: 'https://via.placeholder.com/150?text=Palm+Trees'
-  },
-  {
-    id: 'img003',
-    name: 'New Plantation Area',
-    uploadDate: '2025-07-15',
-    status: 'Processing',
-    treeCount: null,
-    thumbnail: 'https://via.placeholder.com/150?text=Processing'
-  },
-  {
-    id: 'img004',
-    name: 'Drone Survey West',
-    uploadDate: '2025-07-10',
-    status: 'Processed',
-    treeCount: 178,
-    thumbnail: 'https://via.placeholder.com/150?text=Palm+Trees'
-  },
-  {
-    id: 'img005',
-    name: 'Coastal Plantation',
-    uploadDate: '2025-07-05',
-    status: 'Processed',
-    treeCount: 302,
-    thumbnail: 'https://via.placeholder.com/150?text=Palm+Trees'
-  },
-  {
-    id: 'img006',
-    name: 'Hillside Survey',
-    uploadDate: '2025-07-01',
-    status: 'Failed',
-    treeCount: null,
-    thumbnail: 'https://via.placeholder.com/150?text=Failed'
-  },
-]
-
-// Filter options
-const statusOptions = ["All", "Processed", "Processing", "Failed"]
-const dateOptions = ["All Time", "Last Week", "Last Month", "Last 3 Months"]
-
 function HistoryPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [dateFilter, setDateFilter] = useState('All Time')
+  const [annotations, setAnnotations] = useState<Annotation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   
-  // Redirect to home if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate({ to: '/' })
+      return
     }
+
+    const fetchAnnotations = async () => {
+      try {
+        setLoading(true)
+        const annotationService = new AnnotationService()
+        const data = await annotationService.getAnnotations()
+        setAnnotations(data)
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch annotations.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnnotations()
   }, [isAuthenticated, navigate])
 
-  // Filter images based on search query and filters
-  const filteredImages = sampleImages.filter(img => {
-    // Search filter
-    const matchesSearch = searchQuery === '' ||
-        img.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter images based on search query
+  const filteredAnnotations = annotations.filter(ann => {
+    if (searchQuery === '') return true
+    const lowerCaseQuery = searchQuery.toLowerCase()
 
-    // Status filter
-    const matchesStatus = statusFilter === 'All' || img.status === statusFilter
+    const name = ann.metadata?.originalFileName || ''
+    if (name.toLowerCase().includes(lowerCaseQuery)) {
+      return true
+    }
 
-    // For demo purposes, we're not implementing actual date filtering logic
-    return matchesSearch && matchesStatus
+    if (ann.id.toLowerCase().includes(lowerCaseQuery)) {
+      return true
+    }
+
+    return false
   })
+
+  if (loading) {
+    return <Spinner style={{ margin: '20px' }} />
+  }
+
+  if (error) {
+    return (
+      <Callout intent={Intent.DANGER} title="Error" style={{ margin: '20px' }}>
+        {error}
+      </Callout>
+    )
+  }
 
   return (
       <div className="history-container" style={{padding: '20px'}}>
         <div className="history-header" style={{marginBottom: '20px'}}>
-          <H3>Image History</H3>
-          <p>View and manage your previously uploaded palm tree images</p>
+          <H3>Annotation History</H3>
+          <p>View and manage your previously saved annotations</p>
         </div>
 
         <Card elevation={2} style={{marginBottom: '20px'}}>
@@ -122,35 +98,12 @@ function HistoryPage() {
             <div style={{flex: '1', minWidth: '200px'}}>
               <InputGroup
                   leftIcon="search"
-                  placeholder="Search images..."
+                  placeholder="Search by filename..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{width: '100%'}}
               />
             </div>
-
-            <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
-            {/*  <Select*/}
-            {/*      items={statusOptions}*/}
-            {/*      activeItem={statusFilter}*/}
-            {/*      onItemSelect={(item) => setStatusFilter(item)}*/}
-            {/*      filterable={false}*/}
-            {/*      popoverProps={{minimal: true}}*/}
-            {/*      itemRenderer={function (item: string, itemProps: ItemRendererProps): React.JSX.Element | null {*/}
-            {/*        */}
-            {/*      }}            >*/}
-            {/*  <Button rightIcon="caret-down" text={`Status: ${statusFilter}`} />*/}
-            {/*</Select>*/}
-            
-            {/*<Select*/}
-            {/*  items={dateOptions}*/}
-            {/*  activeItem={dateFilter}*/}
-            {/*  onItemSelect={(item) => setDateFilter(item)}*/}
-            {/*  filterable={false}*/}
-            {/*  popoverProps={{ minimal: true }}*/}
-            {/*>*/}
-            {/*  <Button rightIcon="caret-down" text={`Date: ${dateFilter}`} />*/}
-            {/*</Select>*/}
             
             <ButtonGroup>
               <Button 
@@ -165,45 +118,30 @@ function HistoryPage() {
               />
             </ButtonGroup>
           </div>
-        </div>
-      </Card>
+        </Card>
       
-      {filteredImages.length === 0 ? (
-        <Callout intent={Intent.WARNING} title="No Images Found">
-          <p>No images match your current filters. Try adjusting your search criteria.</p>
+      {filteredAnnotations.length === 0 ? (
+        <Callout intent={Intent.PRIMARY} title="No Annotations Found">
+          <p>You have not saved any annotations yet. Upload an image and save the results to see them here.</p>
         </Callout>
       ) : viewMode === 'grid' ? (
         <div className="image-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {filteredImages.map(img => (
-            <Card key={img.id} elevation={2} style={{ display: 'flex', flexDirection: 'column' }}>
+          {filteredAnnotations.map(ann => (
+            <Card key={ann.id} elevation={2} style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ position: 'relative' }}>
                 <img 
-                  src={img.thumbnail} 
-                  alt={img.name} 
+                  src={`data:image/jpeg;base64,${ann.annotatedImage.data}`}
+                  alt={ann.metadata?.originalFileName || 'Annotated image'}
                   style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '3px' }} 
                 />
-                <Tag 
-                  intent={
-                    img.status === 'Processed' ? Intent.SUCCESS : 
-                    img.status === 'Processing' ? Intent.PRIMARY : 
-                    Intent.DANGER
-                  }
-                  style={{ position: 'absolute', top: '10px', right: '10px' }}
-                >
-                  {img.status}
-                </Tag>
               </div>
               
-              <H4 style={{ marginTop: '15px', marginBottom: '5px' }}>{img.name}</H4>
-              <p style={{ margin: '0', color: '#5c7080' }}>Uploaded: {img.uploadDate}</p>
-              {img.treeCount && <p style={{ margin: '5px 0' }}>Trees: {img.treeCount}</p>}
+              <H4 style={{ marginTop: '15px', marginBottom: '5px' }}>{ann.metadata?.originalFileName || 'Untitled'}</H4>
+              <p style={{ margin: '0', color: '#5c7080' }}>Uploaded: {new Date(ann.metadata?.uploadDate).toLocaleString()}</p>
+              {ann.results?.summary?.totalPalms && <p style={{ margin: '5px 0' }}>Trees: {ann.results.summary.totalPalms}</p>}
               
               <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', paddingTop: '15px' }}>
-                {img.status === 'Processed' ? (
-                  <Button icon="document-open" text="View Results" intent={Intent.PRIMARY} small />
-                ) : (
-                  <Button icon="refresh" text="Check Status" small disabled={img.status === 'Failed'} />
-                )}
+                <Button icon="document-open" text="View Details" intent={Intent.PRIMARY} small onClick={() => navigate({ to: `/history/${ann.id}` })} />
                 <Button icon="more" small minimal />
               </div>
             </Card>
@@ -215,37 +153,20 @@ function HistoryPage() {
             <tr>
               <th>Image Name</th>
               <th>Upload Date</th>
-              <th>Status</th>
-              <th>Tree Count</th>
+              <th>Total Palms</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredImages.map(img => (
-              <tr key={img.id}>
-                <td>{img.name}</td>
-                <td>{img.uploadDate}</td>
-                <td>
-                  <Tag 
-                    intent={
-                      img.status === 'Processed' ? Intent.SUCCESS : 
-                      img.status === 'Processing' ? Intent.PRIMARY : 
-                      Intent.DANGER
-                    }
-                    minimal
-                  >
-                    {img.status}
-                  </Tag>
-                </td>
-                <td>{img.treeCount || '-'}</td>
+            {filteredAnnotations.map(ann => (
+              <tr key={ann.id}>
+                <td>{ann.metadata?.originalFileName || 'Untitled'}</td>
+                <td>{new Date(ann.metadata?.uploadDate).toLocaleString()}</td>
+                <td>{ann.results?.summary?.totalPalms || '-'}</td>
                 <td>
                   <ButtonGroup minimal>
-                    {img.status === 'Processed' ? (
-                      <Button icon="document-open" text="View" small />
-                    ) : (
-                      <Button icon="refresh" text="Check" small disabled={img.status === 'Failed'} />
-                    )}
-                    <Button icon="download" small />
+                    <Button icon="document-open" text="View" small onClick={() => navigate({ to: `/history/${ann.id}` })} />
+                    <Button icon="edit" text="Edit" small onClick={() => navigate({ to: `/history/${ann.id}` })} />
                     <Button icon="more" small />
                   </ButtonGroup>
                 </td>
@@ -255,9 +176,8 @@ function HistoryPage() {
         </HTMLTable>
       )}
       
-      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-        <Button icon="arrow-left" text="Back to Upload" />
-        <Button icon="upload" text="Upload New Image" intent={Intent.PRIMARY} />
+      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'end' }}>
+        <Button icon="upload" text="Upload New Image" intent={Intent.PRIMARY} onClick={() => navigate({ to: '/upload' })}/>
       </div>
     </div>
   )

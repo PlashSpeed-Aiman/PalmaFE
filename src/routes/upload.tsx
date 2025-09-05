@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
@@ -16,6 +14,14 @@ import {
   Divider,
   Icon
 } from '@blueprintjs/core'
+import { useAuth } from '../contexts/AuthContext'
+import type { Annotation, ResultsDto, AnnotatedImageDto } from '../services/AnnotationService'
+
+interface ImageProcessingResult {
+  annotated_image: AnnotatedImageDto;
+  results: ResultsDto;
+  success: boolean;
+}
 
 export const Route = createFileRoute('/upload')({
   component: UploadPage,
@@ -31,6 +37,7 @@ interface GpsCoordinates {
 
 function UploadPage() {
   const API_BASE = import.meta.env.VITE_API_URL || "https://localhost:7024"
+  const { isAuthenticated, user } = useAuth()
 
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -44,26 +51,12 @@ function UploadPage() {
   const [processing, setProcessing] = useState(false)
   const [uploadedId, setUploadedId] = useState<string | null>(null)
   const [resultImageSrc, setResultImageSrc] = useState<string | null>(null)
-  const [resultData, setResultData] = useState<any | null>(null)
+  const [resultData, setResultData] = useState<ImageProcessingResult | null>(null)
 
-  // Extract GPS data from image if available
-  // @ts-ignore
-  const extractImageMetadata = (imageFile: File) => {
-    // In a real application, you would use EXIF.js or a similar library
-    // to extract actual GPS coordinates from the image metadata
-
-    // For demo purposes, we'll simulate finding GPS data
-    setTimeout(() => {
-      // Simulate GPS data for demo purposes
-      const simulatedGpsData: GpsCoordinates = {
-        latitude: "3.1390° N",
-        longitude: "101.6869° E",
-        altitude: "45m",
-        timestamp: new Date().toISOString()
-      }
-      setGpsData(simulatedGpsData)
-    }, 500)
-  }
+  // New state for saving annotation
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.FormEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files
@@ -76,6 +69,8 @@ function UploadPage() {
       setUploadedId(null)
       setResultImageSrc(null)
       setResultData(null)
+      setSaveSuccess(false)
+      setSaveError(null)
       return
     }
 
@@ -99,6 +94,8 @@ function UploadPage() {
     setUploadedId(null)
     setResultImageSrc(null)
     setResultData(null)
+    setSaveSuccess(false)
+    setSaveError(null)
 
     // Create preview URL
     const reader = new FileReader()
@@ -119,6 +116,8 @@ function UploadPage() {
     setProcessing(false)
     setResultImageSrc(null)
     setResultData(null)
+    setSaveSuccess(false)
+    setSaveError(null)
 
     try {
       const formData = new FormData()
@@ -191,6 +190,50 @@ function UploadPage() {
       setUploading(false)
       setProcessing(false)
       setUploadError(err?.message || 'An error occurred during upload or processing.')
+    }
+  }
+
+  const handleSaveAnnotation = async () => {
+    if (!user || !resultData) return
+
+    setIsSaving(true)
+    setSaveSuccess(false)
+    setSaveError(null)
+
+    try {
+      const annotationData = {
+        userId: user.id,
+        annotatedImage: resultData.annotated_image,
+        results: resultData.results,
+        success: resultData.success,
+        metadata: {
+          originalFileName: file?.name,
+          uploadDate: new Date().toISOString(),
+        }
+      }
+
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+
+      const res = await fetch(`${API_BASE}/api/Annotations/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(annotationData)
+      })
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`Failed to save annotation (${res.status}): ${text || res.statusText}`)
+      }
+
+      setSaveSuccess(true)
+    } catch (err: any) {
+      console.error(err)
+      setSaveError(err?.message || 'An error occurred while saving the annotation.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -418,6 +461,33 @@ function UploadPage() {
                 </p>
               )}
             </Card>
+          )}
+
+          {isAuthenticated && resultData && (
+            <div style={{ marginTop: '20px' }}>
+              <Button
+                intent="success"
+                text={saveSuccess ? "Saved!" : "Save to My Annotations"}
+                onClick={handleSaveAnnotation}
+                disabled={isSaving || saveSuccess}
+                loading={isSaving}
+                fill
+                large
+                icon="floppy-disk"
+              />
+            </div>
+          )}
+
+          {saveError && (
+            <Callout intent="danger" title="Save Error" style={{ marginTop: '20px' }}>
+              {saveError}
+            </Callout>
+          )}
+
+          {saveSuccess && (
+            <Callout intent="success" title="Annotation Saved" style={{ marginTop: '20px' }}>
+              You can view your saved annotations in the History page.
+            </Callout>
           )}
 
           {uploadComplete && !processing && !resultImageSrc && (

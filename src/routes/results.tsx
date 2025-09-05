@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import {createFileRoute, useNavigate} from '@tanstack/react-router'
+import {useEffect, useState} from 'react'
 import {
   Card,
   Button,
@@ -20,15 +20,19 @@ export const Route = createFileRoute('/results')({
 function ResultsPage() {
   const [selectedTabId, setSelectedTabId] = useState("map")
   const [mapZoom, setMapZoom] = useState(14)
-  
-  // Sample tree data - in a real app, this would come from an API
+  const navigate = useNavigate()
+
+    // Sample tree data - in a real app, this would come from an API
   const treeData = [
     { id: 'T001', latitude: 3.1390, longitude: 101.6869, type: 'Mature' },
     { id: 'T002', latitude: 3.1392, longitude: 101.6872, type: 'Young' },
     { id: 'T003', latitude: 3.1395, longitude: 101.6875, type: 'Mature' },
     { id: 'T004', latitude: 3.1398, longitude: 101.6878, type: 'Mature' }
   ]
-  
+    useEffect(() => {
+        navigate({to: '/upload'})
+    })
+
   // Map zoom handlers
   const handleZoomIn = () => setMapZoom(prev => Math.min(prev + 1, 20))
   const handleZoomOut = () => setMapZoom(prev => Math.max(prev - 1, 1))

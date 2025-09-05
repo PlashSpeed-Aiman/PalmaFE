@@ -1,23 +1,27 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
-  Card,
-  Button,
-  H3,
-  H4,
-  Callout,
-  HTMLTable,
-  Intent,
-  InputGroup,
-  ButtonGroup,
-  Tag,
-  Spinner,
+    Card,
+    Button,
+    H3,
+    H4,
+    Callout,
+    HTMLTable,
+    Intent,
+    InputGroup,
+    ButtonGroup,
+    Tag,
+    Spinner,
+    Popover,
+    Menu,
+    MenuItem, Position,
 } from '@blueprintjs/core'
-import { useAuth } from '../contexts/AuthContext'
-import { AnnotationService, type Annotation } from '../services/AnnotationService'
+import { useAuth } from '@/contexts/AuthContext'
+import { AnnotationService, type Annotation } from '@/services/AnnotationService.ts'
+import {myToaster} from "@/main.tsx";
 
-export const Route = createFileRoute('/history')({
-  component: HistoryPage,
+export const Route = createFileRoute('/history/')({
+    component: HistoryPage,
 })
 
 function HistoryPage() {
@@ -26,12 +30,33 @@ function HistoryPage() {
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { isAuthenticated } = useAuth()
+
+    const handleDelete = async (annotationId: string) => {
+        try {
+            const annotationService = new AnnotationService()
+            await annotationService.deleteAnnotation(annotationId)
+            setAnnotations(annotations.filter(ann => ann.annotationId !== annotationId))
+            myToaster.then(toaster => {
+                toaster.show({
+                    message: "Annotation deleted successfully",
+                    intent: Intent.SUCCESS,
+                })
+            })
+        } catch (err: any) {
+            myToaster.then(toaster => {
+                toaster.show({
+                    message: err.message || "Failed to delete annotation",
+                    intent: Intent.DANGER,
+                })
+            })
+        }
+    }
+    const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate({ to: '/' })
+      navigate({ to: '/' }).then()
       return
     }
 
@@ -50,7 +75,9 @@ function HistoryPage() {
 
     fetchAnnotations()
   }, [isAuthenticated, navigate])
-
+    
+    
+    
   // Filter images based on search query
   const filteredAnnotations = annotations.filter(ann => {
     if (searchQuery === '') return true
@@ -61,7 +88,7 @@ function HistoryPage() {
       return true
     }
 
-    if (ann.id.toLowerCase().includes(lowerCaseQuery)) {
+    if (ann.annotationId.toLowerCase().includes(lowerCaseQuery)) {
       return true
     }
 
@@ -127,22 +154,53 @@ function HistoryPage() {
       ) : viewMode === 'grid' ? (
         <div className="image-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {filteredAnnotations.map(ann => (
-            <Card key={ann.id} elevation={2} style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative' }}>
-                <img 
-                  src={`data:image/jpeg;base64,${ann.annotatedImage.data}`}
-                  alt={ann.metadata?.originalFileName || 'Annotated image'}
-                  style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '3px' }} 
-                />
-              </div>
-              
-              <H4 style={{ marginTop: '15px', marginBottom: '5px' }}>{ann.metadata?.originalFileName || 'Untitled'}</H4>
-              <p style={{ margin: '0', color: '#5c7080' }}>Uploaded: {new Date(ann.metadata?.uploadDate).toLocaleString()}</p>
+            <Card key={ann.annotationId} elevation={2} style={{ display: 'flex', flexDirection: 'column' }}>
+                <H4 style={{
+                    marginTop: '15px',
+                    marginBottom: '5px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                }}>
+                    {ann.metadata?.originalFileName || 'Untitled'}
+                </H4>
+                <p style={{
+                    margin: '0',
+                    color: '#5c7080'
+                }}>Uploaded: {new Date(ann.metadata?.uploadDate).toLocaleString()}</p>
               {ann.results?.summary?.totalPalms && <p style={{ margin: '5px 0' }}>Trees: {ann.results.summary.totalPalms}</p>}
               
               <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', paddingTop: '15px' }}>
-                <Button icon="document-open" text="View Details" intent={Intent.PRIMARY} small onClick={() => navigate({ to: `/history/${ann.id}` })} />
-                <Button icon="more" small minimal />
+                  <Button
+                      icon="document-open"
+                      text="View Details"
+                      intent={Intent.PRIMARY}
+                      small
+                      onClick={() => {
+                          navigate({
+                              to: '/history/$annotationId',
+                              params: {annotationId: ann.annotationId}
+                          }).then(()=>{
+                                  console.log(ann.annotationId)
+                              }
+                          )
+                      }}
+                  />
+                  <Popover
+                      content={
+                          <Menu>
+                              <MenuItem
+                                  icon="trash"
+                                  text="Delete"
+                                  intent={Intent.DANGER}
+                                  onClick={() => handleDelete(ann.annotationId)}
+                              />
+                          </Menu>
+                      }
+                      position="bottom"
+                  >
+                      <Button icon="more" small minimal/>
+                  </Popover>
               </div>
             </Card>
           ))}
@@ -159,15 +217,28 @@ function HistoryPage() {
           </thead>
           <tbody>
             {filteredAnnotations.map(ann => (
-              <tr key={ann.id}>
+              <tr key={ann.annotationId}>
                 <td>{ann.metadata?.originalFileName || 'Untitled'}</td>
                 <td>{new Date(ann.metadata?.uploadDate).toLocaleString()}</td>
                 <td>{ann.results?.summary?.totalPalms || '-'}</td>
                 <td>
                   <ButtonGroup minimal>
-                    <Button icon="document-open" text="View" small onClick={() => navigate({ to: `/history/${ann.id}` })} />
-                    <Button icon="edit" text="Edit" small onClick={() => navigate({ to: `/history/${ann.id}` })} />
-                    <Button icon="more" small />
+                    <Button icon="document-open" text="View" small onClick={() => navigate({ to: `/history/${ann.annotationId}` })} />
+                      <Popover
+                          content={
+                              <Menu>
+                                  <MenuItem
+                                      icon="trash"
+                                      text="Delete"
+                                      intent={Intent.DANGER}
+                                      onClick={() => handleDelete(ann.annotationId)}
+                                  />
+                              </Menu>
+                          }
+                          position="bottom"
+                      >
+                          <Button icon="more" small/>
+                      </Popover>
                   </ButtonGroup>
                 </td>
               </tr>

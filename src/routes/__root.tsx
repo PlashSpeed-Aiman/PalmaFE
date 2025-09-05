@@ -29,9 +29,9 @@ export const Route = createRootRoute({
             <Link to="/upload" className="bp4-button bp4-minimal" style={{marginRight: '0.5rem'}}>
               Upload
             </Link>
-            <Link to="/results" className="bp4-button bp4-minimal" style={{marginRight: '0.5rem'}}>
-              Results
-            </Link>
+            {/*<Link to="/results" className="bp4-button bp4-minimal" style={{marginRight: '0.5rem'}}>*/}
+            {/*  Results*/}
+            {/*</Link>*/}
             {isAuthenticated && (
               <Link to="/history" className="bp4-button bp4-minimal" style={{marginRight: '0.5rem'}}>
                 History

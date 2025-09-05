@@ -451,7 +451,11 @@ function UploadPage() {
                   </tr>
                   <tr>
                     <td><strong>Young</strong></td>
-                    <td>{resultData.results.counts.young ?? 0}</td>
+                    <td>{resultData.results.counts.Young ?? 0}</td>
+                  </tr>
+                  <tr>
+                      <td><strong>Grass</strong></td>
+                      <td>{resultData.results.counts.Grass ?? 0}</td>
                   </tr>
                 </tbody>
               </HTMLTable>

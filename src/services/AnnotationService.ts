@@ -1,148 +1,192 @@
 export interface Annotation {
-  id: string;
-  annotatedImage: AnnotatedImageDto;
-  results: ResultsDto;
-  success: boolean;
-  metadata?: any;
+    annotationId: string;
+    annotatedImage: AnnotatedImageDto;
+    results: AnnotatedResultsDto;
+    success: boolean;
+    metadata?: any;
 }
 
 export interface AnnotationUploadDto {
     userId: string;
     annotatedImage: AnnotatedImageDto;
-    results: ResultsDto;
+    results: AnnotatedResultsDto;
     success: boolean;
     metadata?: any;
-  }
-
-export interface AnnotationUpdateDto {
-  results: ResultsDto;
-  success: boolean;
-  metadata?: any;
 }
 
-  export interface AnnotatedImageDto {
+export interface AnnotationUpdateDto {
+    results: AnnotatedResultsDto;
+    success: boolean;
+    metadata?: any;
+}
+
+export interface AnnotatedImageDto {
     data: string;
     format: string;
-  }
-
-  export interface ResultsDto {
+}
+export interface AnnotatedResultsDto {
     counts: CountsDto;
     detections: DetectionDto[];
     summary: SummaryDto;
-  }
+}
 
-  export interface CountsDto {
+export interface ResultsDto {
+    counts: ResultsCountsDto;
+    detections: DetectionDto[];
+    summary: SummaryDto;
+}
+
+export interface ResultsCountsDto {
     'Mature(Dead)': number;
     'Mature(Healthy)': number;
     'Mature(Yellow)': number;
+    'Grass': number;
+    'Young': number;
+}
+
+export interface CountsDto {
+    'matureDead': number;
+    'matureHealthy': number;
+    'matureYellow': number;
     'grass': number;
     'young': number;
-  }
+}
 
-  export interface DetectionDto {
+export interface DetectionDto {
     bbox: number[];
     class: string;
     confidence: number;
-  }
+}
 
-  export interface SummaryDto {
+export interface SummaryDto {
     totalMature: number;
     totalPalms: number;
     totalYoung: number;
-  }
+}
 
-  export class AnnotationService {
+export class AnnotationService {
     private API_BASE = import.meta.env.VITE_API_URL || "https://localhost:7024";
 
     private getToken(): string | null {
-      return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    }
+
+
+    async deleteAnnotation(id: string): Promise<void> {
+        const token = this.getToken();
+        if (!token) {
+            throw new Error("User is not authenticated");
+        }
+
+        const response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(`Failed to get annotation (${response.status}): ${text || response.statusText}`);
+        }
+
+        return;
+
     }
 
     async uploadAnnotation(annotationData: AnnotationUploadDto): Promise<Annotation> {
-      const token = this.getToken();
-      if (!token) {
-        throw new Error("User is not authenticated");
-      }
+        const token = this.getToken();
+        if (!token) {
+            throw new Error("User is not authenticated");
+        }
 
-      const response = await fetch(`${this.API_BASE}/api/Annotations/upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(annotationData)
-      });
+        const response = await fetch(`${this.API_BASE}/api/Annotations/upload`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(annotationData)
+        });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`Failed to upload annotation (${response.status}): ${text || response.statusText}`);
-      }
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(`Failed to upload annotation (${response.status}): ${text || response.statusText}`);
+        }
 
-      return response.json();
+        return response.json();
     }
 
     async getAnnotations(): Promise<Annotation[]> {
-      const token = this.getToken();
-      if (!token) {
-        throw new Error("User is not authenticated");
-      }
-
-      const response = await fetch(`${this.API_BASE}/api/Annotations`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
+        const token = this.getToken();
+        if (!token) {
+            throw new Error("User is not authenticated");
         }
-      });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`Failed to get annotations (${response.status}): ${text || response.statusText}`);
-      }
+        const response = await fetch(`${this.API_BASE}/api/Annotations`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-      return response.json();
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(`Failed to get annotations (${response.status}): ${text || response.statusText}`);
+        }
+
+        return response.json();
     }
 
     async getAnnotation(id: string): Promise<Annotation> {
-      const token = this.getToken();
-      if (!token) {
-        throw new Error("User is not authenticated");
-      }
-
-      const response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
+        const token = this.getToken();
+        if (!token) {
+            throw new Error("User is not authenticated");
         }
-      });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`Failed to get annotation (${response.status}): ${text || response.statusText}`);
-      }
+        const response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-      return response.json();
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(`Failed to get annotation (${response.status}): ${text || response.statusText}`);
+        }
+
+        return response.json();
     }
 
     async updateAnnotationMetadata(id: string, data: AnnotationUpdateDto): Promise<Annotation> {
-      const token = this.getToken();
-      if (!token) {
-        throw new Error("User is not authenticated");
-      }
+        const token = this.getToken();
+        if (!token) {
+            throw new Error("User is not authenticated");
+        }
 
-      const response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
+        let response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`Failed to update annotation metadata (${response.status}): ${text || response.statusText}`);
-      }
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(`Failed to update annotation metadata (${response.status}): ${text || response.statusText}`);
+        }
 
-      return response.json();
+        response = await fetch(`${this.API_BASE}/api/Annotations/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        });
+
+        return response.json();
     }
-  }
+}

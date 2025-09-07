@@ -59,9 +59,9 @@ export interface DetectionDto {
 }
 
 export interface SummaryDto {
-    totalMature: number;
-    totalPalms: number;
-    totalYoung: number;
+    total_mature: number;
+    total_palms: number;
+    total_young: number;
 }
 
 export class AnnotationService {

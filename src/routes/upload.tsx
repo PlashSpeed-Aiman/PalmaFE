@@ -461,7 +461,7 @@ function UploadPage() {
               </HTMLTable>
               {resultData.results.summary && (
                 <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#5c7080' }}>
-                  Total palms: {resultData.results.summary.totalPalms} | Total mature: {resultData.results.summary.totalMature} | Total young: {resultData.results.summary.totalYoung}
+                  Total palms: {resultData.results.summary.total_palms} | Total mature: {resultData.results.summary.total_mature} | Total young: {resultData.results.summary.total_young}
                 </p>
               )}
             </Card>

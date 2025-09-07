@@ -27,7 +27,7 @@ export interface AnnotatedImageDto {
 export interface AnnotatedResultsDto {
     counts: CountsDto;
     detections: DetectionDto[];
-    summary: SummaryDto;
+    summary: AnnotatedSummaryDto;
 }
 
 export interface ResultsDto {
@@ -57,7 +57,11 @@ export interface DetectionDto {
     class: string;
     confidence: number;
 }
-
+export interface AnnotatedSummaryDto {
+    totalMature: number;
+    totalPalms: number;
+    totalYoung: number;
+}
 export interface SummaryDto {
     total_mature: number;
     total_palms: number;
